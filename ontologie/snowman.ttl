@@ -44,15 +44,20 @@
 
 ###  http://www.semanticweb.org/21402554/ontologies/2019/9/ganivet-snowman#Big
 :Big rdf:type owl:Class ;
-     owl:equivalentClass [ owl:intersectionOf ( :CellFree
-                                                [ rdf:type owl:Restriction ;
-                                                  owl:onProperty :hasOnIt ;
-                                                  owl:hasValue :big
-                                                ]
-                                              ) ;
-                           rdf:type owl:Class
-                         ] ;
      rdfs:subClassOf :Snow .
+
+
+###  http://www.semanticweb.org/21402554/ontologies/2019/9/ganivet-snowman#CellBig
+:CellBig rdf:type owl:Class ;
+         owl:equivalentClass [ owl:intersectionOf ( :CellFree
+                                                    [ rdf:type owl:Restriction ;
+                                                      owl:onProperty :hasOnIt ;
+                                                      owl:hasValue :big
+                                                    ]
+                                                  ) ;
+                               rdf:type owl:Class
+                             ] ;
+         rdfs:subClassOf :CellFree .
 
 
 ###  http://www.semanticweb.org/21402554/ontologies/2019/9/ganivet-snowman#CellFree
@@ -111,6 +116,32 @@
                     rdfs:subClassOf :CellFree .
 
 
+###  http://www.semanticweb.org/21402554/ontologies/2019/9/ganivet-snowman#CellLittle
+:CellLittle rdf:type owl:Class ;
+            owl:equivalentClass [ owl:intersectionOf ( :CellFree
+                                                       [ rdf:type owl:Restriction ;
+                                                         owl:onProperty :hasOnIt ;
+                                                         owl:hasValue :little
+                                                       ]
+                                                     ) ;
+                                  rdf:type owl:Class
+                                ] ;
+            rdfs:subClassOf :CellFree .
+
+
+###  http://www.semanticweb.org/21402554/ontologies/2019/9/ganivet-snowman#CellMedium
+:CellMedium rdf:type owl:Class ;
+            owl:equivalentClass [ owl:intersectionOf ( :CellFree
+                                                       [ rdf:type owl:Restriction ;
+                                                         owl:onProperty :hasOnIt ;
+                                                         owl:hasValue :medium
+                                                       ]
+                                                     ) ;
+                                  rdf:type owl:Class
+                                ] ;
+            rdfs:subClassOf :CellFree .
+
+
 ###  http://www.semanticweb.org/21402554/ontologies/2019/9/ganivet-snowman#CellNonFree
 :CellNonFree rdf:type owl:Class .
 
@@ -130,14 +161,6 @@
 
 ###  http://www.semanticweb.org/21402554/ontologies/2019/9/ganivet-snowman#Little
 :Little rdf:type owl:Class ;
-        owl:equivalentClass [ owl:intersectionOf ( :CellFree
-                                                   [ rdf:type owl:Restriction ;
-                                                     owl:onProperty :hasOnIt ;
-                                                     owl:hasValue :little
-                                                   ]
-                                                 ) ;
-                              rdf:type owl:Class
-                            ] ;
         rdfs:subClassOf :Snow .
 
 
@@ -148,14 +171,6 @@
 
 ###  http://www.semanticweb.org/21402554/ontologies/2019/9/ganivet-snowman#Medium
 :Medium rdf:type owl:Class ;
-        owl:equivalentClass [ owl:intersectionOf ( :CellFree
-                                                   [ rdf:type owl:Restriction ;
-                                                     owl:onProperty :hasOnIt ;
-                                                     owl:hasValue :medium
-                                                   ]
-                                                 ) ;
-                              rdf:type owl:Class
-                            ] ;
         rdfs:subClassOf :Snow .
 
 
@@ -183,7 +198,7 @@
 
 ###  http://www.semanticweb.org/21402554/ontologies/2019/9/ganivet-snowman#big
 :big rdf:type owl:NamedIndividual ,
-              :Snow ;
+              :Big ;
      :locatedAt :cell78 .
 
 
@@ -1089,13 +1104,13 @@
 
 ###  http://www.semanticweb.org/21402554/ontologies/2019/9/ganivet-snowman#little
 :little rdf:type owl:NamedIndividual ,
-                 :Snow ;
+                 :Little ;
         :locatedAt :cell16 .
 
 
 ###  http://www.semanticweb.org/21402554/ontologies/2019/9/ganivet-snowman#medium
 :medium rdf:type owl:NamedIndividual ,
-                 :Snow ;
+                 :Medium ;
         :locatedAt :cell54 .
 
 

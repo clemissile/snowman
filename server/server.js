@@ -38,29 +38,53 @@ app.get('/move', function(req, res) {
 			// On teste si une boule de neige est sur le chemin
 			makeStardogQuery('SELECT ?snow ' +
 							 'WHERE {' +
-							 '?cellPlayer rdf:type :CellPlayer .' +
-							 '?cellPlayer :has'+ direction +' ?cellMove .' +
-							 '?cellMove rdf:type ?snow .' +
-							 'FILTER(?snow IN(:Little, :Medium, :Big, :LittleMedium, :MediumBig, :Snowman))' +
+								'?cellPlayer rdf:type :CellPlayer .' +
+								'?cellPlayer :has'+ direction +' ?cellMove .' +
+								'?cellMove rdf:type ?snow .' +
+								'FILTER(?snow IN(:CellLittle, :CellMedium, :CellBig, :CellLittleMedium, :CellMediumBig, :Snowman))' +
 							'}', function(data) {
 								if (data.results.bindings.length > 0) {
-									let typeSnow = data.results.bindings[0].snow.value.replace('http://www.semanticweb.org/21402554/ontologies/2019/9/ganivet-snowman#', '');;
+									let typeSnow = data.results.bindings[0].snow.value.replace('http://www.semanticweb.org/21402554/ontologies/2019/9/ganivet-snowman#', '');
 									console.log(typeSnow, "|", direction);
 
-									let stQ = "DELETE { ?player :locatedAt ?cellPlayer ." +
-											  "			?snow :locatedAt ?cellSnow .}" +
-							   				  "INSERT { ?player :locatedAt ?newCell ." +
-											  "			?snow :locatedAt ?newCellS .}" +
-											  "WHERE {" +
-													"?player rdf:type :Player ." +
-													"?snow rdf:type :Snow ." +
-													"?cellPlayer rdf:type :CellPlayer ." +
-													"?cellSnow rdf:type :"+ typeSnow +" ." +
-													"?cellPlayer :has"+ direction +" ?newCell ." +
-													"?cellSnow :has"+ direction +" ?newCellS ." +
-											  "}";
-									makeStardogQuery(stQ, function(data) {
-										res.redirect("http://localhost:8081/afficheJeu");
+									//On teste si la cellule N+1 est de type snow
+									makeStardogQuery('SELECT ?snow ' +
+													'WHERE {' +
+														'?cellN1 rdf:type :'+ typeSnow +' .' +
+														'?cellN1 :has'+ direction +' ?cellMove .' +
+														'?cellMove rdf:type ?snow .' +
+														'FILTER(?snow IN(:CellLittle, :CellMedium, :CellBig, :CellLittleMedium, :CellMediumBig, :Snowman))' +
+													'}', function(data) {
+														if (data.results.bindings.length > 0) {
+															let typeSnowN1 = data.results.bindings[0].snow.value.replace('http://www.semanticweb.org/21402554/ontologies/2019/9/ganivet-snowman#', '');
+
+															if ((typeSnow == "CellLittle" && typeSnowN1 == "CellMedium") || (typeSnow == "CellMedium" && typeSnowN1 == "CellBig")) {
+																// Si on est l'empillage peut se faire
+																console.log("go empiler", typeSnow, "et", typeSnowN1);
+																res.redirect("http://localhost:8081/afficheJeu");
+															} else {
+																// Sinon on ne fait rien
+																console.log("imposisble empiler", typeSnow, "et", typeSnowN1);
+																res.redirect("http://localhost:8081/afficheJeu");
+															}
+														} else {
+															//Si N+1 est vide, on déplace le joueur et la boule concernée
+															let stQ = "DELETE { ?player :locatedAt ?cellPlayer ." +
+															"			?snow :locatedAt ?cellSnow .}" +
+															"INSERT { ?player :locatedAt ?newCell ." +
+															"			?snow :locatedAt ?newCellS .}" +
+															"WHERE {" +
+																"?player rdf:type :Player ." +
+																"?snow rdf:type :"+typeSnow.replace("Cell", "")+" ." +
+																"?cellPlayer rdf:type :CellPlayer ." +
+																"?cellSnow rdf:type :"+ typeSnow +" ." +
+																"?cellPlayer :has"+ direction +" ?newCell ." +
+																"?cellSnow :has"+ direction +" ?newCellS ." +
+															"}";
+															makeStardogQuery(stQ, function(data) {
+																res.redirect("http://localhost:8081/afficheJeu");
+															});
+														}
 									});
 								} else {
 									console.log(direction, "| Mvt Joueur OK");
