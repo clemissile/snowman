@@ -43,7 +43,7 @@ app.get('/move', function(req, res) {
 								'?cellMove rdf:type ?snow .' +
 								'FILTER(?snow IN(:CellLittle, :CellMedium, :CellBig, :CellLittleMedium, :CellMediumBig, :Snowman))' +
 							'}', function(data) {
-								if (data.results.bindings.length > 0) {
+								if (data.results.bindings.length == 1) {
 									let typeSnow = data.results.bindings[0].snow.value.replace('http://www.semanticweb.org/21402554/ontologies/2019/9/ganivet-snowman#', '');
 									console.log(typeSnow, "|", direction);
 
@@ -60,12 +60,44 @@ app.get('/move', function(req, res) {
 
 															if ((typeSnow == "CellLittle" && typeSnowN1 == "CellMedium") || (typeSnow == "CellMedium" && typeSnowN1 == "CellBig")) {
 																// Si on est l'empillage peut se faire
-																console.log("go empiler", typeSnow, "et", typeSnowN1);
-																res.redirect("http://localhost:8081/afficheJeu");
+																let stQ = "DELETE { ?player :locatedAt ?cellPlayer ." +
+																"			?snow :locatedAt ?cellSnow .}" +
+																"INSERT { ?player :locatedAt ?newCell ." +
+																"			?snow :locatedAt ?newCellS .}" +
+																"WHERE {" +
+																	"?player rdf:type :Player ." +
+																	"?snow rdf:type :"+typeSnow.replace("Cell", "")+" ." +
+																	"?cellPlayer rdf:type :CellPlayer ." +
+																	"?cellSnow rdf:type :"+ typeSnow +" ." +
+																	"?cellPlayer :has"+ direction +" ?newCell ." +
+																	"?cellSnow :has"+ direction +" ?newCellS ." +
+																"}";
+																makeStardogQuery(stQ, function(data) {
+																	res.redirect("http://localhost:8081/afficheJeu");
+																});
 															} else {
-																// Sinon on ne fait rien
-																console.log("imposisble empiler", typeSnow, "et", typeSnowN1);
-																res.redirect("http://localhost:8081/afficheJeu");
+																if (data.results.bindings.length > 1) {
+																	// Si le resultat contient plus de 2 c'est qu'on veut
+																	// empiler sur LittleMedium ou MediumBig
+																	let stQ = "DELETE { ?player :locatedAt ?cellPlayer ." +
+																	"			?snow :locatedAt ?cellSnow .}" +
+																	"INSERT { ?player :locatedAt ?newCell ." +
+																	"			?snow :locatedAt ?newCellS .}" +
+																	"WHERE {" +
+																		"?player rdf:type :Player ." +
+																		"?snow rdf:type :"+typeSnow.replace("Cell", "")+" ." +
+																		"?cellPlayer rdf:type :CellPlayer ." +
+																		"?cellSnow rdf:type :"+ typeSnow +" ." +
+																		"?cellPlayer :has"+ direction +" ?newCell ." +
+																		"?cellSnow :has"+ direction +" ?newCellS ." +
+																	"}";
+																	makeStardogQuery(stQ, function(data) {
+																		res.redirect("http://localhost:8081/afficheJeu");
+																	});
+																} else {
+																	// Sinon on ne fait rien
+																	res.redirect("http://localhost:8081/afficheJeu");
+																}
 															}
 														} else {
 															//Si N+1 est vide, on déplace le joueur et la boule concernée
@@ -86,6 +118,9 @@ app.get('/move', function(req, res) {
 															});
 														}
 									});
+								} else if (data.results.bindings.length > 1) {
+									//LittleMedium, MediumBig ou Snowman donc pas de move possible
+									res.redirect("http://localhost:8081/afficheJeu");
 								} else {
 									console.log(direction, "| Mvt Joueur OK");
 
@@ -124,16 +159,27 @@ app.get('/afficheJeu', function (req, res) {
 		array[pos[0]][pos[1]] = "P";
 
 		let balls = "";
-		makeStardogQuery('SELECT ?cell WHERE { ?snow rdf:type :Snow . ?snow :locatedAt ?cell }', function(data) {
+		makeStardogQuery("SELECT ?cellL ?cellM ?cellB WHERE { ?cellL rdf:type :CellLittle . ?cellM rdf:type :CellMedium . ?cellB rdf:type :CellBig }", function(data) {
 			balls = data.results.bindings;
+			console.log(balls);
 
-			let bL = balls[1].cell.value.replace('http://www.semanticweb.org/21402554/ontologies/2019/9/ganivet-snowman#cell', '');
-			let bM = balls[2].cell.value.replace('http://www.semanticweb.org/21402554/ontologies/2019/9/ganivet-snowman#cell', '');
-			let bB = balls[0].cell.value.replace('http://www.semanticweb.org/21402554/ontologies/2019/9/ganivet-snowman#cell', '');
+			let bL = balls[0].cellL.value.replace('http://www.semanticweb.org/21402554/ontologies/2019/9/ganivet-snowman#cell', '');
+			let bM = balls[0].cellM.value.replace('http://www.semanticweb.org/21402554/ontologies/2019/9/ganivet-snowman#cell', '');
+			let bB = balls[0].cellB.value.replace('http://www.semanticweb.org/21402554/ontologies/2019/9/ganivet-snowman#cell', '');
 
-			array[bL[0]][bL[1]] = "L";
-			array[bM[0]][bM[1]] = "M";
-			array[bB[0]][bB[1]] = "B";
+			if (bL == bM && bM != bB) {
+				array[bL[0]][bL[1]] = "LM";
+				array[bB[0]][bB[1]] = "B";
+			} else if (bM == bB && bB != bL) {
+				array[bL[0]][bL[1]] = "L";
+				array[bB[0]][bB[1]] = "MB";
+			} else if (bL == bM && bM == bB) {
+				array[bL[0]][bL[1]] = "LMB";
+			} else {
+				array[bL[0]][bL[1]] = "L";
+				array[bM[0]][bM[1]] = "M";
+				array[bB[0]][bB[1]] = "B";
+			}
 
 			res.send(array);
 		});

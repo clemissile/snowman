@@ -3,6 +3,9 @@
     <v-row align="center" justify="center">
         <Plateau :grille="grille"/>
     </v-row>
+    <v-row align="center" justify="center">
+        <v-btn>Reset</v-btn>
+    </v-row>
   </v-container>
 </template>
 
