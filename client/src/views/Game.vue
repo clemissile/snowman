@@ -4,7 +4,7 @@
         <Plateau :grille="grille"/>
     </v-row>
     <v-row align="center" justify="center">
-        <v-btn>Reset</v-btn>
+        <v-btn class="mt-5" v-on:click="reset">Reset</v-btn>
     </v-row>
   </v-container>
 </template>
@@ -45,6 +45,9 @@ export default {
       } else {
         console.log("déjà en mouvement");
       }
+    },
+    reset: function (ev) {
+      this.queryNodeServer('reset', this.loadGame);
     }
   },
   mounted() {

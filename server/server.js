@@ -27,6 +27,41 @@ app.use(function(req, res, next) {
 	next();
 });
 
+/* Reset du jeu */
+app.get('/reset', function(req, res) {
+	let stQ = "DELETE { ?player :locatedAt ?cellPlayer . }" +
+	"INSERT { ?player :locatedAt :cell"+(Math.floor(Math.random() * 9) + 1)+""+(Math.floor(Math.random() * 9) + 1)+" . }" +
+	"WHERE  {" +
+	"	?player rdf:type :Player ." +
+	"	?cellPlayer rdf:type :CellPlayer" +
+	"};" +
+	
+	"DELETE { ?snowLittle :locatedAt ?cellLittle . }" +
+	"INSERT { ?snowLittle :locatedAt :cell"+(Math.floor(Math.random() * 8) + 1)+""+(Math.floor(Math.random() * 8) + 1)+" . }" +
+	"WHERE  {" +
+	"	?snowLittle rdf:type :Little ." +
+	"	?cellLittle rdf:type :CellLittle" +
+	"};" +
+	
+	"DELETE { ?snowMedium :locatedAt ?cellMedium . }" +
+	"INSERT { ?snowMedium :locatedAt :cell"+(Math.floor(Math.random() * 8) + 1)+""+(Math.floor(Math.random() * 8) + 1)+" . }" +
+	"WHERE  {" +
+	"	?snowMedium rdf:type :Medium ." +
+	"	?cellMedium rdf:type :CellMedium" +
+	"};" +
+	
+	"DELETE { ?snowBig :locatedAt ?cellBig . }" +
+	"INSERT { ?snowBig :locatedAt :cell"+(Math.floor(Math.random() * 8) + 1)+""+(Math.floor(Math.random() * 8) + 1)+" . }" +
+	"WHERE  {" +
+	"	?snowBig rdf:type :Big ." +
+	"	?cellBig rdf:type :CellBig" +
+	"}";
+
+	makeStardogQuery(stQ, function(data) {
+		res.redirect("http://localhost:8081/afficheJeu");
+	});
+});
+
 /* Gestion du mouvement */
 app.get('/move', function(req, res) {
 	// On récupère la direction demandée
@@ -47,60 +82,40 @@ app.get('/move', function(req, res) {
 									let typeSnow = data.results.bindings[0].snow.value.replace('http://www.semanticweb.org/21402554/ontologies/2019/9/ganivet-snowman#', '');
 									console.log(typeSnow, "|", direction);
 
-									//On teste si la cellule N+1 est de type snow
-									makeStardogQuery('SELECT ?snow ' +
-													'WHERE {' +
-														'?cellN1 rdf:type :'+ typeSnow +' .' +
-														'?cellN1 :has'+ direction +' ?cellMove .' +
-														'?cellMove rdf:type ?snow .' +
-														'FILTER(?snow IN(:CellLittle, :CellMedium, :CellBig, :CellLittleMedium, :CellMediumBig, :Snowman))' +
-													'}', function(data) {
-														if (data.results.bindings.length > 0) {
-															let typeSnowN1 = data.results.bindings[0].snow.value.replace('http://www.semanticweb.org/21402554/ontologies/2019/9/ganivet-snowman#', '');
+									makeStardogQuery('ASK WHERE { ?snow rdf:type :CellLittle . ?snow :hasNorth ?cellMove . ?cellMove rdf:type :CellFree .}', function(data) {
+										if (data.boolean) {
+											//On teste si la cellule N+1 est de type snow
+											makeStardogQuery('SELECT ?snow ' +
+											'WHERE {' +
+												'?cellN1 rdf:type :'+ typeSnow +' .' +
+												'?cellN1 :has'+ direction +' ?cellMove .' +
+												'?cellMove rdf:type ?snow .' +
+												'FILTER(?snow IN(:CellLittle, :CellMedium, :CellBig, :CellLittleMedium, :CellMediumBig, :Snowman))' +
+											'}', function(data) {
+												if (data.results.bindings.length > 0) {
+													let typeSnowN1 = data.results.bindings[0].snow.value.replace('http://www.semanticweb.org/21402554/ontologies/2019/9/ganivet-snowman#', '');
 
-															if ((typeSnow == "CellLittle" && typeSnowN1 == "CellMedium") || (typeSnow == "CellMedium" && typeSnowN1 == "CellBig")) {
-																// Si on est l'empillage peut se faire
-																let stQ = "DELETE { ?player :locatedAt ?cellPlayer ." +
-																"			?snow :locatedAt ?cellSnow .}" +
-																"INSERT { ?player :locatedAt ?newCell ." +
-																"			?snow :locatedAt ?newCellS .}" +
-																"WHERE {" +
-																	"?player rdf:type :Player ." +
-																	"?snow rdf:type :"+typeSnow.replace("Cell", "")+" ." +
-																	"?cellPlayer rdf:type :CellPlayer ." +
-																	"?cellSnow rdf:type :"+ typeSnow +" ." +
-																	"?cellPlayer :has"+ direction +" ?newCell ." +
-																	"?cellSnow :has"+ direction +" ?newCellS ." +
-																"}";
-																makeStardogQuery(stQ, function(data) {
-																	res.redirect("http://localhost:8081/afficheJeu");
-																});
-															} else {
-																if (data.results.bindings.length > 1) {
-																	// Si le resultat contient plus de 2 c'est qu'on veut
-																	// empiler sur LittleMedium ou MediumBig
-																	let stQ = "DELETE { ?player :locatedAt ?cellPlayer ." +
-																	"			?snow :locatedAt ?cellSnow .}" +
-																	"INSERT { ?player :locatedAt ?newCell ." +
-																	"			?snow :locatedAt ?newCellS .}" +
-																	"WHERE {" +
-																		"?player rdf:type :Player ." +
-																		"?snow rdf:type :"+typeSnow.replace("Cell", "")+" ." +
-																		"?cellPlayer rdf:type :CellPlayer ." +
-																		"?cellSnow rdf:type :"+ typeSnow +" ." +
-																		"?cellPlayer :has"+ direction +" ?newCell ." +
-																		"?cellSnow :has"+ direction +" ?newCellS ." +
-																	"}";
-																	makeStardogQuery(stQ, function(data) {
-																		res.redirect("http://localhost:8081/afficheJeu");
-																	});
-																} else {
-																	// Sinon on ne fait rien
-																	res.redirect("http://localhost:8081/afficheJeu");
-																}
-															}
-														} else {
-															//Si N+1 est vide, on déplace le joueur et la boule concernée
+													if ((typeSnow == "CellLittle" && typeSnowN1 == "CellMedium") || (typeSnow == "CellMedium" && typeSnowN1 == "CellBig")) {
+														// Si on est dans un de ces cas, l'empillage peut se faire
+														let stQ = "DELETE { ?player :locatedAt ?cellPlayer ." +
+														"			?snow :locatedAt ?cellSnow .}" +
+														"INSERT { ?player :locatedAt ?newCell ." +
+														"			?snow :locatedAt ?newCellS .}" +
+														"WHERE {" +
+															"?player rdf:type :Player ." +
+															"?snow rdf:type :"+typeSnow.replace("Cell", "")+" ." +
+															"?cellPlayer rdf:type :CellPlayer ." +
+															"?cellSnow rdf:type :"+ typeSnow +" ." +
+															"?cellPlayer :has"+ direction +" ?newCell ." +
+															"?cellSnow :has"+ direction +" ?newCellS ." +
+														"}";
+														makeStardogQuery(stQ, function(data) {
+															res.redirect("http://localhost:8081/afficheJeu");
+														});
+													} else {
+														if (data.results.bindings.length > 1) {
+															// Si le resultat contient plus de 2 c'est qu'on veut
+															// empiler sur LittleMedium ou MediumBig
 															let stQ = "DELETE { ?player :locatedAt ?cellPlayer ." +
 															"			?snow :locatedAt ?cellSnow .}" +
 															"INSERT { ?player :locatedAt ?newCell ." +
@@ -116,7 +131,33 @@ app.get('/move', function(req, res) {
 															makeStardogQuery(stQ, function(data) {
 																res.redirect("http://localhost:8081/afficheJeu");
 															});
+														} else {
+															// Sinon on ne fait rien
+															res.redirect("http://localhost:8081/afficheJeu");
 														}
+													}
+												} else {
+													//Si N+1 est vide, on déplace le joueur et la boule concernée
+													let stQ = "DELETE { ?player :locatedAt ?cellPlayer ." +
+													"			?snow :locatedAt ?cellSnow .}" +
+													"INSERT { ?player :locatedAt ?newCell ." +
+													"			?snow :locatedAt ?newCellS .}" +
+													"WHERE {" +
+														"?player rdf:type :Player ." +
+														"?snow rdf:type :"+typeSnow.replace("Cell", "")+" ." +
+														"?cellPlayer rdf:type :CellPlayer ." +
+														"?cellSnow rdf:type :"+ typeSnow +" ." +
+														"?cellPlayer :has"+ direction +" ?newCell ." +
+														"?cellSnow :has"+ direction +" ?newCellS ." +
+													"}";
+													makeStardogQuery(stQ, function(data) {
+														res.redirect("http://localhost:8081/afficheJeu");
+													});
+												}
+											});
+										} else {
+											res.redirect("http://localhost:8081/afficheJeu");
+										}
 									});
 								} else if (data.results.bindings.length > 1) {
 									//LittleMedium, MediumBig ou Snowman donc pas de move possible
@@ -161,7 +202,6 @@ app.get('/afficheJeu', function (req, res) {
 		let balls = "";
 		makeStardogQuery("SELECT ?cellL ?cellM ?cellB WHERE { ?cellL rdf:type :CellLittle . ?cellM rdf:type :CellMedium . ?cellB rdf:type :CellBig }", function(data) {
 			balls = data.results.bindings;
-			console.log(balls);
 
 			let bL = balls[0].cellL.value.replace('http://www.semanticweb.org/21402554/ontologies/2019/9/ganivet-snowman#cell', '');
 			let bM = balls[0].cellM.value.replace('http://www.semanticweb.org/21402554/ontologies/2019/9/ganivet-snowman#cell', '');
