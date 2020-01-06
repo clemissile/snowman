@@ -8,13 +8,11 @@
     <div v-else-if="value === 'B'" class="cell ball"><v-icon style="font-size:25pt;">mdi-circle</v-icon></div>
 
     <div v-else-if="value === 'LM'" class="cell ball">
-        <v-row><v-icon style="font-size:22pt;">mdi-circle-medium</v-icon></v-row><br>
-        <v-row><v-icon style="font-size:42pt;">mdi-circle-medium</v-icon></v-row>
+        <img src="../../assets/littlemedium.png" alt="LM"/>
     </div>
 
     <div v-else-if="value === 'MB'" class="cell ball">
-        <v-icon style="font-size:42pt;">mdi-circle-medium</v-icon>
-        <v-icon style="font-size:25pt;">mdi-circle</v-icon>
+        <img src="../../assets/mediumbig.png" alt="MB"/>
     </div>
 
     <div v-else-if="value === 'LMB'" class="cell ball"><v-icon>mdi-snowman</v-icon></div>
